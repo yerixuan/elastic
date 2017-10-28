@@ -69,15 +69,15 @@ public class ElasticsearchTest {
 
     public static void main(String[] args)  throws Exception{
 
-//        Settings settings = Settings.builder()
-//               // .put("cluster.name", "test-elk")
-//            //    .put("http.basic.user","admin")
-//              //  .put("http.basic.password", "admin")
-//               // .put("Authorization","Basic YWRtaW46YWRtaW4=")
-//                .build();
-//        TransportClient client = new PreBuiltTransportClient(settings)
-//                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"), 9300));
-//       insert(client);
+        Settings settings = Settings.builder()
+               // .put("cluster.name", "test-elk")
+            //    .put("http.basic.user","admin")
+              //  .put("http.basic.password", "admin")
+               // .put("Authorization","Basic YWRtaW46YWRtaW4=")
+                .build();
+        TransportClient client = new PreBuiltTransportClient(settings)
+                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"), 9300));
+       insert(client);
 
 //        RestClientBuilder builder = RestClient.builder(new HttpHost("10.201.3.102", 9300, "https"));
 //        Header[] defaultHeaders = new Header[]{new BasicHeader("Authorization", "Basic YWRtaW46YWRtaW4=")};
@@ -265,6 +265,26 @@ public class ElasticsearchTest {
 
 
 
+
+    /*  分组查询格式
+    {
+  "size":0,
+
+    "aggs" : {
+        "genres" : {
+            "terms" : {
+                "include": [
+                    "server-side"
+                ],
+                "field" : "group.keyword"
+            },
+            "aggs" : {
+                "max_play_count" : { "terms" : { "field" : "endpoint.keyword" } }
+            }
+        }
+    }
+}
+     */
 
     private static Map getQueryString(String group, String endpoint, String name) {
         Map queryMap = new HashMap();
@@ -642,11 +662,11 @@ public class ElasticsearchTest {
         //插入数据
         for(int i = 0 ; i < 100 ; i++) {
 
-            client.prepareIndex("index2", "type2", getID())
+            client.prepareIndex("index7", "type7", getID())
                     .setSource(jsonBuilder()
                             .startObject()
                             .field("group", "server-side")
-                            .field("endpoint", "172.22.25.48/uc")
+                            .field("endpoint", "172.22.25.47_uc")
                             .field("name", "uc_response_time")
                             .field("flag","uc")
                             .field("date", getDate())
@@ -657,13 +677,13 @@ public class ElasticsearchTest {
                     )
                     .get();
 
-            client.prepareIndex("index2", "type2", getID())
+            client.prepareIndex("index7", "type7", getID())
                     .setSource(jsonBuilder()
                             .startObject()
-                            .field("group", "server-side")
-                            .field("endpoint", "172.22.25.48/uc")
-                            .field("name", "uc_response_time")
-                            .field("flag","uc")
+                            .field("group", "client-side")
+                            .field("endpoint", "172.22.25.49_book")
+                            .field("name", "book_response_time")
+                            .field("flag","book")
                             .field("id",2)
                             .field("id2",22)
                             .field("id3",222)
@@ -672,13 +692,13 @@ public class ElasticsearchTest {
                     )
                     .get();
 
-            client.prepareIndex("index2", "type2", getID())
+            client.prepareIndex("index7", "type7", getID())
                     .setSource(jsonBuilder()
                             .startObject()
-                            .field("group", "server-side")
-                            .field("endpoint", "172.22.25.48/uc")
-                            .field("name", "uc_response_time")
-                            .field("flag","uc")
+                            .field("group", "common-side")
+                            .field("endpoint", "172.22.25.99_commom")
+                            .field("name", "commom_response_time")
+                            .field("flag","commom")
                             .field("id",3)
                             .field("id2",33)
                             .field("id3",333)
