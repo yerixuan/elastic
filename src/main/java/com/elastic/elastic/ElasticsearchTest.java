@@ -175,11 +175,15 @@ public class ElasticsearchTest {
    //     System.out.println(JSONObject.toJSONString(queryMap));
 
 
+        /*
+          进行 分组查询的时候 需要对 需要进行分组的字段进行 set fielddata = true 操作
+         */
+
         OkHttpClient httpClient = new OkHttpClient();
         final MediaType JSON=MediaType.parse("application/json; charset=utf-8");
-        RequestBody body =  RequestBody.create(JSON, queryGruop("","",""));
+        RequestBody body =  RequestBody.create(JSON, query("server-side","",""));
         Request request = new Request.Builder()
-                .url("http://127.0.0.1:9200/_search") //  http://10.201.3.33:9200
+                .url("http://127.0.0.1:9200/testdataindex1/_search") //  http://10.201.3.33:9200
                  .post(body)
                 .addHeader("accept","*/*")
                 //       .addHeader("Authorization", "Basic dGVzdDp0ZXN0") // Basic dGVzdDp0ZXN0  Basic YWRtaW46YWRtaW4=
@@ -187,15 +191,12 @@ public class ElasticsearchTest {
                 .addHeader("user-agent","Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)")
                 .build();
 
-      //  Call call = httpClient.newCall(request);
-
-       // System.out.println(call.execute().body().string());
-    //    System.out.println(parseGroup(call.execute().body().string()));
+     //    Call call = httpClient.newCall(request);
+//
+     //    System.out.println(call.execute().body().string());
+       // System.out.println(parseGroup(call.execute().body().string()));
      //   System.out.println(sendPost("http://127.0.0.1:9200/myindex/_search",queryGruop()));
 
-        Map map =new HashMap();
-        map.put("query",getQueryString("groupname","","testname"));
-        System.out.println(JSONObject.toJSONString(map));
 
     }
 
@@ -227,11 +228,49 @@ public class ElasticsearchTest {
          return JSONObject.toJSONString(list);
     }
 
+    private static Map getQueryString2(String group ,String endpoint, String name) {
+
+        Map map = new HashMap();
+        List list =new ArrayList();
+        if(group.isEmpty()) {
+            return null;
+        }
+        if(!group.isEmpty()) {
+            Map m1 = new HashMap();
+            Map m2 = new HashMap();
+            m2.put("group",group);
+            m1.put("term",m2);
+            list.add(m1);
+        }
+        if(!endpoint.isEmpty()) {
+            Map m1 = new HashMap();
+            Map m2 = new HashMap();
+            m2.put("endpoint",endpoint);
+            m1.put("term",m2);
+            list.add(m1);
+        }
+        if(!name.isEmpty()) {
+            Map m1 = new HashMap();
+            Map m2 = new HashMap();
+            m2.put("name",name);
+            m1.put("term",m2);
+            list.add(m1);
+        }
+        map.put("filter",list);
+        Map m2 = new HashMap();
+        m2.put("bool",map);
+        return m2;
+
+    }
+
+
+
+
     private static Map getQueryString(String group, String endpoint, String name) {
         Map queryMap = new HashMap();
 
         if(group.isEmpty()) {
-            queryMap.put("match_all","{}");
+            queryMap.put("match_all",null);
             return queryMap;
         }
 
@@ -244,81 +283,68 @@ public class ElasticsearchTest {
 
         groupParam.put("group",group);
         mathchParam.put("match",groupParam);
-        mathchList.add(mathchParam);
-
-      if(!endpoint.isEmpty() && !name.isEmpty()) {
-          Map endpointMatch = new HashMap();
-          Map nameMatch = new HashMap();
-          Map endpointParam = new HashMap();
-          Map nameParam = new HashMap();
-          endpointParam.put("endpoint",endpoint);
-          nameParam.put("name",name);
-          endpointMatch.put("match",endpointParam);
-          nameMatch.put("match", nameParam);
-          mathchList.add(endpointMatch);
-          mathchList.add(nameMatch);
-      }
-      if(!endpoint.isEmpty() && name.isEmpty()) {
-          Map endpointMatch = new HashMap();
-          Map endpointParam = new HashMap();
-          endpointParam.put("endpoint",endpoint);
-          endpointMatch.put("match",endpointParam);
-          mathchList.add(endpointMatch);
-      }
-      if(endpoint.isEmpty() && !name.isEmpty()) {
-          Map nameMatch = new HashMap();
-          Map nameParam = new HashMap();
-          nameParam.put("name",name);
-          nameMatch.put("match", nameParam);
-          mathchList.add(nameMatch);
-      }
-
-        shouldParam.put("must",mathchList);
-        boolParam.put("bool",shouldParam);
-      return  boolParam;
+        return mathchParam;
+//        mathchList.add(mathchParam);
+//
+//      if(!endpoint.isEmpty() && !name.isEmpty()) {
+//          Map endpointMatch = new HashMap();
+//          Map nameMatch = new HashMap();
+//          Map endpointParam = new HashMap();
+//          Map nameParam = new HashMap();
+//          endpointParam.put("endpoint",endpoint);
+//          nameParam.put("name",name);
+//          endpointMatch.put("match",endpointParam);
+//          nameMatch.put("match", nameParam);
+//          mathchList.add(endpointMatch);
+//          mathchList.add(nameMatch);
+//      }
+//      if(!endpoint.isEmpty() && name.isEmpty()) {
+//          Map endpointMatch = new HashMap();
+//          Map endpointParam = new HashMap();
+//          endpointParam.put("endpoint",endpoint);
+//          endpointMatch.put("match",endpointParam);
+//          mathchList.add(endpointMatch);
+//      }
+//      if(endpoint.isEmpty() && !name.isEmpty()) {
+//          Map nameMatch = new HashMap();
+//          Map nameParam = new HashMap();
+//          nameParam.put("name",name);
+//          nameMatch.put("match", nameParam);
+//          mathchList.add(nameMatch);
+//      }
+//
+//        shouldParam.put("should",mathchList);
+//        boolParam.put("bool",shouldParam);
+//      return  boolParam;
     }
 
 
-    public static String queryGruop(String group ,String endpoint ,String name) throws  Exception{
+    public static String query(String group ,String endpoint ,String name) throws  Exception{
 
        Map<String, Object>  param1 = new HashMap();
        Map<String, Object>  param2 = new HashMap();
        Map<String, Object>  param3 = new HashMap();
        Map<String, Object> param4 = new HashMap();
-       Map<String, Object> query = new HashMap();
-
-       if(group.isEmpty() && endpoint.isEmpty() && name.isEmpty() ) {
-           query.put("match_all","{}");
-       }
-       if(!group.isEmpty()) {
-           Map map = new HashMap();
-           query.put("match_all", map.put("group",group));
-       }
-       if(!endpoint.isEmpty()) {
-           Map map = new HashMap();
-           query.put("match_all", map.put("endpoint",endpoint));
-       }
-        if(!name.isEmpty()) {
-            Map map = new HashMap();
-            query.put("match_all", map.put("name",name));
-        }
 
 
-
-       param4.put("field", "group.keyword");
+       param4.put("field", "endpoint.keyword");
+       List list =new ArrayList();
+       list.add("server-side");
+       param4.put("include",list);
        param3.put("terms", param4);
-       param2.put("group",param3);
+
+       param2.put("endp",param3);
        param1.put("aggs", param2);
-       param1.put("query","");
+       param1.put("query",getQueryString(group, endpoint, name));
     //   param5.put("match_all","{}");
     //    param1.put("query",param5);
-    //   param1.put("from", 1);
-       param1.put("size", 0);
+      //  param1.put("from", 0);
+       param1.put("size", 10);
 
 
         System.out.println(JSONObject.toJSONString(param1));
 
-            return JSONObject.toJSONString(param1);
+   return JSONObject.toJSONString(param1);
     }
 
     public static String sendPost(String url, String param) {
@@ -374,10 +400,6 @@ public class ElasticsearchTest {
         }
         return result;
     }
-
-
-
-
 
     private static SSLContext trustAllHttpsCertificates() throws Exception {
         javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[1];
@@ -445,13 +467,9 @@ public class ElasticsearchTest {
     }
 
 
-
-
-
     public static void insertTestData(TransportClient client) {
 
     }
-
 
     public static void groupTest(TransportClient client){
 
@@ -500,8 +518,6 @@ public class ElasticsearchTest {
             System.out.println(hit.getIndex()+ "  "+hit.getType()+ "  "+ hit.getId() + hit.getSource());
         }
     }
-
-
 
     private static void queryByField(TransportClient client) {
         SearchRequestBuilder responsebuilder = client.prepareSearch("test");//.setTypes("type");
@@ -624,42 +640,88 @@ public class ElasticsearchTest {
 
     public static void insert(TransportClient client) throws  Exception{
         //插入数据
-        for(int i = 0 ; i < 1000 ; i++) {
-        IndexResponse response1 = client.prepareIndex("myindex", "mytype", getID())
-                .setSource(jsonBuilder()
-                        .startObject()
-                        .field("group", "server-side")
-                        .field("endpoint", "172.22.25.48/uc")
-                        .field("name", "uc_response_time")
-                        .field("value","uc"+i)
-                        .field("date", getDate())
-                        .endObject()
-                )
-                .get();
+        for(int i = 0 ; i < 100 ; i++) {
 
-            client.prepareIndex("myindex", "mytype", getID())
-                    .setSource(jsonBuilder()
-                            .startObject()
-                            .field("group", "client-side")
-                            .field("endpoint", "172.22.25.48/book")
-                            .field("name", "book_response_time")
-                            .field("value","book"+i)
-                            .field("date", getDate())
-                            .endObject()
-                    )
-                    .get();
-
-            client.prepareIndex("myindex", "mytype", getID())
+            client.prepareIndex("index2", "type2", getID())
                     .setSource(jsonBuilder()
                             .startObject()
                             .field("group", "server-side")
-                            .field("endpoint", "172.22.25.48/commom")
-                            .field("name", "commom_response_time")
-                            .field("value","commom"+i)
+                            .field("endpoint", "172.22.25.48/uc")
+                            .field("name", "uc_response_time")
+                            .field("flag","uc")
+                            .field("date", getDate())
+                            .field("id",1)
+                            .field("id2",11)
+                            .field("id3",111)
+                            .endObject()
+                    )
+                    .get();
+
+            client.prepareIndex("index2", "type2", getID())
+                    .setSource(jsonBuilder()
+                            .startObject()
+                            .field("group", "server-side")
+                            .field("endpoint", "172.22.25.48/uc")
+                            .field("name", "uc_response_time")
+                            .field("flag","uc")
+                            .field("id",2)
+                            .field("id2",22)
+                            .field("id3",222)
                             .field("date", getDate())
                             .endObject()
                     )
                     .get();
+
+            client.prepareIndex("index2", "type2", getID())
+                    .setSource(jsonBuilder()
+                            .startObject()
+                            .field("group", "server-side")
+                            .field("endpoint", "172.22.25.48/uc")
+                            .field("name", "uc_response_time")
+                            .field("flag","uc")
+                            .field("id",3)
+                            .field("id2",33)
+                            .field("id3",333)
+                            .field("date", getDate())
+                            .endObject()
+                    )
+                    .get();
+
+//         client.prepareIndex("testdataindex1", "mytesttype1", getID())
+//                .setSource(jsonBuilder()
+//                        .startObject()
+//                        .field("group", "server-side")
+//                        .field("endpoint", "172.22.25.48/uc")
+//                        .field("name", "uc_response_time")
+//                        .field("flag","uc")
+//                        .field("date", getDate())
+//                        .endObject()
+//                )
+//                .get();
+//
+//            client.prepareIndex("testdataindex1", "mytesttype1", getID())
+//                    .setSource(jsonBuilder()
+//                            .startObject()
+//                            .field("group", "client-side")
+//                            .field("endpoint", "172.22.25.48/book")
+//                            .field("name", "book_response_time")
+//                            .field("flag","book")
+//                            .field("date", getDate())
+//                            .endObject()
+//                    )
+//                    .get();
+//
+//            client.prepareIndex("testdataindex1", "mytesttype1", getID())
+//                    .setSource(jsonBuilder()
+//                            .startObject()
+//                            .field("group", "commom-side")
+//                            .field("endpoint", "172.22.25.48/commom")
+//                            .field("name", "commom_response_time")
+//                            .field("flag","commom")
+//                            .field("date", getDate())
+//                            .endObject()
+//                    )
+//                    .get();
 
     }
     }
