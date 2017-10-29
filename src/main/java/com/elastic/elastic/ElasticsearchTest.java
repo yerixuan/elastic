@@ -69,15 +69,15 @@ public class ElasticsearchTest {
 
     public static void main(String[] args)  throws Exception{
 
-        Settings settings = Settings.builder()
-               // .put("cluster.name", "test-elk")
-            //    .put("http.basic.user","admin")
-              //  .put("http.basic.password", "admin")
-               // .put("Authorization","Basic YWRtaW46YWRtaW4=")
-                .build();
-        TransportClient client = new PreBuiltTransportClient(settings)
-                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"), 9300));
-       insert(client);
+//        Settings settings = Settings.builder()
+//               // .put("cluster.name", "test-elk")
+//            //    .put("http.basic.user","admin")
+//              //  .put("http.basic.password", "admin")
+//               // .put("Authorization","Basic YWRtaW46YWRtaW4=")
+//                .build();
+//        TransportClient client = new PreBuiltTransportClient(settings)
+//                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"), 9300));
+//       insert(client);
 
 //        RestClientBuilder builder = RestClient.builder(new HttpHost("10.201.3.102", 9300, "https"));
 //        Header[] defaultHeaders = new Header[]{new BasicHeader("Authorization", "Basic YWRtaW46YWRtaW4=")};
@@ -181,9 +181,9 @@ public class ElasticsearchTest {
 
         OkHttpClient httpClient = new OkHttpClient();
         final MediaType JSON=MediaType.parse("application/json; charset=utf-8");
-        RequestBody body =  RequestBody.create(JSON, query("server-side","",""));
+        RequestBody body =  RequestBody.create(JSON, query2("server-side","172.22.25.47_uc"));
         Request request = new Request.Builder()
-                .url("http://127.0.0.1:9200/testdataindex1/_search") //  http://10.201.3.33:9200
+                .url("http://127.0.0.1:9200/index7/_search") //  http://10.201.3.33:9200
                  .post(body)
                 .addHeader("accept","*/*")
                 //       .addHeader("Authorization", "Basic dGVzdDp0ZXN0") // Basic dGVzdDp0ZXN0  Basic YWRtaW46YWRtaW4=
@@ -191,11 +191,13 @@ public class ElasticsearchTest {
                 .addHeader("user-agent","Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)")
                 .build();
 
-     //    Call call = httpClient.newCall(request);
+         Call call = httpClient.newCall(request);
 //
-     //    System.out.println(call.execute().body().string());
+     //   System.out.println(call.execute().body().string());
        // System.out.println(parseGroup(call.execute().body().string()));
      //   System.out.println(sendPost("http://127.0.0.1:9200/myindex/_search",queryGruop()));
+
+      System.out.println(parseJson(call.execute().body().string(),"queryGroup","endpointQuery","nameQuery"));
 
 
     }
@@ -284,6 +286,37 @@ public class ElasticsearchTest {
         }
     }
 }
+
+
+{
+	"size":0,
+    "aggs" : {
+        "countries" : {
+            "terms" : {
+             	"include": [
+                       "server-side"
+				],
+                "field" : "group.keyword"
+
+            },
+            "aggs" : {
+                "rock" : {
+                   "terms" : {
+             	"include": [
+                       "172.22.25.47_uc"
+				],
+                "field" : "endpoint.keyword"
+
+                   },
+                    "aggs" : {
+                        "playback_stats" : { "terms" : { "field" : "name" }}
+                    }
+                }
+            }
+        }
+    }
+}
+
      */
 
     private static Map getQueryString(String group, String endpoint, String name) {
@@ -336,6 +369,75 @@ public class ElasticsearchTest {
 //        shouldParam.put("should",mathchList);
 //        boolParam.put("bool",shouldParam);
 //      return  boolParam;
+    }
+
+
+    public static List parseJson(String json, String groupQuery, String endpointQuery, String nameQuery) {
+
+        //记得判空
+        List list = new ArrayList();
+        JSONObject data = JSONObject.parseObject(json);
+        JSONObject groupResult = data.getJSONObject("aggregations").getJSONObject(groupQuery);
+        JSONArray buckets = groupResult.getJSONArray("buckets");
+
+        if(!endpointQuery.isEmpty()) {
+           JSONObject endpointResult = buckets.getJSONObject(0).getJSONObject(endpointQuery);
+           buckets = endpointResult.getJSONArray("buckets");
+        }
+
+        if(!nameQuery.isEmpty()) {
+                JSONObject nameResult = buckets.getJSONObject(0).getJSONObject(nameQuery);
+                buckets = nameResult.getJSONArray("buckets");
+        }
+
+        for(int i=0; i<buckets.size() ;i++) {
+          list.add((buckets.getJSONObject(i)).get("key"));
+        }
+        return list;
+    }
+
+    //拼接分组 查询 json
+    public static String query2(String group, String endpoint) {
+
+        Map query = new HashMap();
+
+        Map groupQueryName = new HashMap();
+        Map groupTerms = new HashMap();
+        Map groupField = new HashMap();
+
+        Map endpointQueryName = new HashMap();
+        Map endpointTerms = new HashMap();
+        Map endpointField = new HashMap();
+
+        Map nameQueryName = new HashMap();
+        Map nameTerms = new HashMap();
+        Map nameField = new HashMap();
+
+        groupField.put("field","group.keyword");
+        groupTerms.put("terms",groupField);
+        groupQueryName.put("queryGroup",groupTerms);
+
+
+        if(!group.isEmpty()) {
+            groupField.put("include", Arrays.asList(group));
+            endpointField.put("field", "endpoint.keyword");
+            endpointTerms.put("terms", endpointField);
+            endpointQueryName.put("endpointQuery", endpointTerms);
+            groupTerms.put("aggs",endpointQueryName);
+        }
+
+        if(!endpoint.isEmpty()) {
+            endpointField.put("include", Arrays.asList(endpoint));
+            nameField.put("field", "name.keyword");
+            nameTerms.put("terms", nameField);
+            nameQueryName.put("nameQuery",nameTerms);
+            endpointTerms.put("aggs",nameQueryName);
+        }
+
+       query.put("size",0);
+       query.put("aggs",groupQueryName);
+        return JSONObject.toJSONString(query);
+
     }
 
 
