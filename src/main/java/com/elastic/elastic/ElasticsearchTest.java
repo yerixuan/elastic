@@ -69,15 +69,15 @@ public class ElasticsearchTest {
 
     public static void main(String[] args)  throws Exception{
 
-//        Settings settings = Settings.builder()
-//               // .put("cluster.name", "test-elk")
-//            //    .put("http.basic.user","admin")
-//              //  .put("http.basic.password", "admin")
-//               // .put("Authorization","Basic YWRtaW46YWRtaW4=")
-//                .build();
-//        TransportClient client = new PreBuiltTransportClient(settings)
-//                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"), 9300));
-//       insert(client);
+        Settings settings = Settings.builder()
+               // .put("cluster.name", "test-elk")
+            //    .put("http.basic.user","admin")
+              //  .put("http.basic.password", "admin")
+               // .put("Authorization","Basic YWRtaW46YWRtaW4=")
+                .build();
+        TransportClient client = new PreBuiltTransportClient(settings)
+                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"), 9300));
+       insert(client);
 
 //        RestClientBuilder builder = RestClient.builder(new HttpHost("10.201.3.102", 9300, "https"));
 //        Header[] defaultHeaders = new Header[]{new BasicHeader("Authorization", "Basic YWRtaW46YWRtaW4=")};
@@ -191,16 +191,18 @@ public class ElasticsearchTest {
                 .addHeader("user-agent","Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)")
                 .build();
 
-         Call call = httpClient.newCall(request);
+       //  Call call = httpClient.newCall(request);
 //
      //   System.out.println(call.execute().body().string());
        // System.out.println(parseGroup(call.execute().body().string()));
      //   System.out.println(sendPost("http://127.0.0.1:9200/myindex/_search",queryGruop()));
 
-      System.out.println(parseJson(call.execute().body().string(),"queryGroup","endpointQuery","nameQuery"));
-
+   //   System.out.println(parseJson(call.execute().body().string(),"queryGroup","endpointQuery","nameQuery"));
+//http://blog.csdn.net/a422100210/article/details/60959450
 
     }
+
+
 
 
     public static String setField() {
@@ -764,14 +766,14 @@ public class ElasticsearchTest {
         //插入数据
         for(int i = 0 ; i < 100 ; i++) {
 
-            client.prepareIndex("index7", "type7", getID())
+            client.prepareIndex("index8", "type8", getID())
                     .setSource(jsonBuilder()
                             .startObject()
                             .field("group", "server-side")
                             .field("endpoint", "172.22.25.47_uc")
                             .field("name", "uc_response_time")
                             .field("flag","uc")
-                            .field("date", getDate())
+                            .field("date", new Date())
                             .field("id",1)
                             .field("id2",11)
                             .field("id3",111)
@@ -779,7 +781,7 @@ public class ElasticsearchTest {
                     )
                     .get();
 
-            client.prepareIndex("index7", "type7", getID())
+            client.prepareIndex("index8", "type8", getID())
                     .setSource(jsonBuilder()
                             .startObject()
                             .field("group", "client-side")
@@ -789,12 +791,12 @@ public class ElasticsearchTest {
                             .field("id",2)
                             .field("id2",22)
                             .field("id3",222)
-                            .field("date", getDate())
+                            .field("date", new Date())
                             .endObject()
                     )
                     .get();
 
-            client.prepareIndex("index7", "type7", getID())
+            client.prepareIndex("index8", "type8", getID())
                     .setSource(jsonBuilder()
                             .startObject()
                             .field("group", "common-side")
@@ -804,7 +806,7 @@ public class ElasticsearchTest {
                             .field("id",3)
                             .field("id2",33)
                             .field("id3",333)
-                            .field("date", getDate())
+                            .field("date", new Date())
                             .endObject()
                     )
                     .get();
