@@ -203,6 +203,56 @@ public class ElasticsearchTest {
     }
 
 
+    // 分组查询 names 并 找出 时间最近的一条记录
+    public static  String metrics() {
+        /**
+         * {
+         "size": 0,
+         "aggs": {
+         "countries": {
+         "terms": {
+         "include": [
+         "server-side"
+         ],
+         "field": "group.keyword"
+         },
+         "aggs": {
+         "rock": {
+         "terms": {
+         "include": [
+         "172.22.25.47_uc"
+         ],
+         "field": "endpoint.keyword"
+         },
+         "aggs": {
+         "playback_stats": {
+         "terms": {
+         "field": "name"
+         },
+         "aggs": {
+         "rated": {
+         "top_hits": {
+         "sort": [
+         {
+         "date": {
+         "order": "desc"
+         }
+         }
+         ],
+         "size": 1
+         }
+         }
+         }
+         }
+         }
+         }
+         }
+         }
+         }
+         }
+         */
+        return "";
+    }
 
 
     public static String setField() {
